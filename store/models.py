@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 class Customer(models.Model):
     user = models.OneToOneField(User, null=True, blank=True, on_delete=models.CASCADE)
     name = models.CharField(max_length=200, null=True)
-    email = models.CharField(max_length=200)
+    email = models.EmailField(max_length=200)
 
     def __str__(self):
         return self.name
@@ -13,7 +13,7 @@ class Customer(models.Model):
 
 class Product(models.Model):
     name = models.CharField(max_length=200)
-    price = models.FloatField()
+    price = models.DecimalField(max_digits=7, decimal_places=3)
     digital = models.BooleanField(default=False, null=True, blank=False) #To check if a product is digital or not so we can know if we have to ship it or not
     image = models.ImageField(null=True, blank=True)
 
@@ -39,13 +39,28 @@ class Order(models.Model):
         return str(self.id)
 
     @property
-    def get_cart_total(self):
+    def shipping(self):
+        shipping = False
         orderitems = self.orderitem_set.all()
+        for i in orderitems:
+            if i.product.digital == False:
+                shipping = True
+        return shipping
+
+    @property
+    def get_cart_total(self):
+        orderitems = self.orderitem_set.all() # query order items
         total = sum([item.get_total for item in orderitems])
         return total
 
     @property
     def get_cart_quantity(self):
+        orderitems = self.orderitem_set.all()
+        total = sum([item.quantity for item in orderitems])
+        return total
+
+    @property
+    def get_cart_items(self):
         orderitems = self.orderitem_set.all()
         total = sum([item.quantity for item in orderitems])
         return total
